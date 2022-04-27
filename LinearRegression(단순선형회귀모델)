@@ -1,0 +1,50 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+df = pd.read_csv('/Users/tastebread/Desktop/Section2/n211/kc_house_data.csv')
+
+#print(df.head())
+#print(df.columns)
+print(df.dtypes)
+
+#print(df.corr().sort_values(by='sqft_living',ascending=True))
+#print(df.corr().sort_values(by='lat',ascending=True))
+#print(df['price'].describe())
+
+#기준모델 그려보기
+x = df['sqft_living']
+y = df['price']
+predict = df['price'].mean() # 우리가 정한 기준모델인 평균을 예측
+errors = predict - df['price'] #평균값으로 예측할 때 샘플별 평균값과의 차이를 저장
+mean_absolute_error = errors.abs().mean() # errors 값을 절대값으로 바꾼뒤 평균을 구함
+print(mean_absolute_error)
+print(predict)
+"""
+sns.lineplot(x=x,y=predict, color='red')
+sns.scatterplot(x=x,y=y,color='blue')
+plt.show()
+"""
+#print(df[(df['sqft_living'] == 15000)])
+
+#예측모델 인스턴스를 생성
+model = LinearRegression()
+# X특성들의 테이블과, y 타겟 벡터를 생성
+feature = ['sqft_living']
+target = ['price']
+X_train = df[feature]
+y_train = df[target]
+
+#모델을 학습(fit) 하기위한 코드
+print(model.fit(X_train,y_train))
+
+
+#X_test = [[4000]] #새로운 데이터 한 샘플을 선택해 학습한 모델을 통해 예측
+X_test = [[x] for x in df['sqft_living']] #전체 테스트 데이터 모델을 통해 예측
+y_pred = model.predict(X_test)
+#print(y_pred)
+
+plt.scatter(X_train,y_train, color='black',linewidths=1)
+plt.scatter(X_test,y_pred, color='blue', linewidths=1)
+plt.show()
