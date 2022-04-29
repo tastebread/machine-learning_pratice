@@ -1,0 +1,85 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import mean_absolute_error #기준모델로 훈련에러(mae) 계산
+from category_encoders import OneHotEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import chi2, SelectKBest
+from sklearn.feature_selection import f_regression #상관관계 분석방법 모듈중 하나(회귀)
+from sklearn.linear_model import LinearRegression
+train_df = pd.read_csv('/Users/tastebread/Desktop/kaggle/houseprices/train.csv')
+test_df = pd.read_csv('/Users/tastebread/Desktop/kaggle/houseprices/test.csv')
+
+#print(train_df.shape,test_df.shape)
+#print(train_df.dtypes)
+#print(train_df['SalePrice'].describe())
+
+#타겟 컬럼을 제외한 컬럼 나열
+
+#특성들과 타겟(SalePrice)과의 상관계수를 계산하고 가장 상관관계가 높은 특성을 찾아
+#타겟과의 관계를 시각화 해보기
+#print(train_df.corr().sort_values(by='LotArea',ascending=True))
+#print(train_df.corr().sort_values(by='LotFrontage',ascending=True))
+train_df['LotFrontage'] = train_df['LotFrontage'].fillna(train_df['LotFrontage'].mean())
+print(train_df['LotFrontage'].isnull().sum())
+
+x= train_df['LotArea']
+y= train_df['SalePrice']
+
+x1= train_df['LotFrontage']
+
+
+predict = train_df['SalePrice'].mean() #기준모델의 평균값 예측
+errors = predict - train_df['SalePrice'] #평균값으로 예측할때 평균값의 차이를 저장
+mean_absolute_error = errors.abs().mean()
+
+print(f'퍙군깂의 차이를 저장 : {mean_absolute_error:.0f}')
+print(f'기준모델의 평균값 예측 : {predict:.0f}')
+
+#LotArea scatterplot과 기준모델 시각화
+
+"""
+sns.lineplot(x=x,y=predict, color='red')
+sns.scatterplot(x=x,y=y, color='blue')
+plt.show()
+sns.lineplot(x=x1,y=predict, color='red')
+sns.scatterplot(x=x1,y=y, color='blue')
+plt.show()
+"""
+
+
+#LotFrontage 대한 선형회귀모델 만들어보기
+model = LinearRegression() #예측모델 인스턴스 생성
+
+feature = ['LotFrontage']
+target = ['SalePrice']
+X_train = train_df[feature]
+y_train = train_df[target]
+
+print(model.fit(X_train,y_train))
+
+#새로운 데이터 샘플을 선택해서 학습한 모델을 통해 예측
+X_test = [[71]]
+y_pred = model.predict(X_test) #주택의 가격예상의 예측치를 나타냄
+print(f'{X_test[0][0]} LotFrontage를 가지는 주택의 예상가격은 ${int(y_pred)}입니다.')
+
+print(model.coef_) #계수
+print(model.intercept_) #절편
+"""
+sns.set(style='whitegrid', context='notebook')
+cols = ['LotArea','LotFrontage','SalePrice']
+sns.pairplot(train_df[cols], height=2)
+plt.show()
+"""
+
+#전체 테스트 데이터를 모델을 통해 예측
+X_test = [[x] for x in train_df['LotFrontage']] #전체데이터로 예측
+y_pred = model.predict(X_test)
+
+#train 데이터에 대한 그래프 그려보기
+plt.scatter(X_train,y_train, color='black',linewidth=1)
+#test 데이터에 대한 그래프트 그리기
+plt.scatter(X_test,y_pred, color='blue',linewidth=1)
+plt.show()
+
