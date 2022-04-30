@@ -1,0 +1,61 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import mean_absolute_error #기준모델로 훈련에러(mae) 계산
+from category_encoders import OneHotEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import chi2, SelectKBest
+from sklearn.feature_selection import f_regression #상관관계 분석방법 모듈중 하나(회귀)
+from sklearn.linear_model import LinearRegression
+train_df = pd.read_csv('/Users/tastebread/Desktop/kaggle/houseprices/train.csv')
+test_df = pd.read_csv('/Users/tastebread/Desktop/kaggle/houseprices/test.csv')
+
+
+#다중선형회귀
+train_df['LotArea'] = train_df['LotArea'].fillna(train_df['LotArea'].mean())
+print(train_df['LotArea'].isnull().sum())
+#데이터 나눠보기 데이터의 75% 갯수
+print(len(train_df)*0.75)
+
+#훈련 / 데이터 셋 나누기 (sample 메소드를 사용해서 나누기)
+train = train_df.sample(frac=0.75, random_state=1) # 75% 로 나누기
+test = train_df.drop(train.index) #train 데이터의 나머지를 test 에 저장
+
+print(train.shape,test.shape)
+
+#target 데이터 SalePrice 평균
+train['SalePrice'].mean()
+
+#label 정의
+target = 'SalePrice'
+y_train = train_df[target]
+y_test = test[target]
+
+predict = y_train.mean() #SalePrice 평균값으로 예측(기준모델)
+
+#기준모델로 훈련 에러(MAE) 계산
+y_pred = [predict] * len(y_train)
+mae = mean_absolute_error(y_train,y_pred)
+
+print(f'테스트에러 {mae:.0f}')
+
+#OLS 라인 그려보기 LotArea
+"""
+sns.regplot(x=train['LotArea'], y=train['SalePrice']).set_title('Housing Prices')
+plt.show()
+"""
+
+model = LinearRegression()
+
+#다중모델 학습을 위한 특성
+features = ['LotArea',
+            'LotFrontage']
+X_train = train[features]
+X_test = test(features)
+
+#모델 fit(학습)
+model.fit(X_train,y_train)
+y_pred = model.predict(X_train) #주택 가격의 예측치를 나타냄
+mae = mean_absolute_error(y_train,y_pred) #평균값의 차이
+print(f'훈련 에러{mae:.0f}')
