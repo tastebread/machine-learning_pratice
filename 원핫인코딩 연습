@@ -1,0 +1,70 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import mean_absolute_error #기준모델로 훈련에러(mae) 계산
+from category_encoders import OneHotEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import chi2, SelectKBest
+from sklearn.feature_selection import f_regression #상관관계 분석방법 모듈중 하나(회귀)
+from sklearn.linear_model import LinearRegression
+
+#범주형 자료를 다루기 위한 원핫인코딩을 배울 수 있다
+#Ridge 회귀를 통한 특성 선택 과정을 이해합니다
+#정규화 을 위한 Ridge 회귀모델을 이해하고 사용할 수 있습니다
+
+#columns :
+df = pd.DataFrame({
+    'Personal': ['ISTJ', 'ISTP', 'ISFJ', 'ENFP', 'ISTJ', 'ISTP', 'ISFJ', 'ENFP','ISTJ','ISTP'],
+    'count': [3, 4, 3, 2, 3, 3, 3, 3,2,6],
+    'value': [55000, 61000, 44000, 35000, 53000, 45000, 32000, 51000,42000,60000]
+})
+#Personal은 성격유형을 구분하는 범주형 변수이다
+#범주형 변수는 순서가없는 명목형 과 순서가 있는 순서형으로 나누어지는데
+#성격유형은 우선쉬를 따질 필요가 없고 구분만 하면 되므로 명목형 범주형 변수이
+#print(df)
+
+print(df['Personal'].value_counts(normalize=True))
+#Personal의 범주 비율
+
+#sns.countplot(x=df['Personal'])
+#plt.show()
+
+print(df['value'].mean())
+#value의 평균
+
+print(df.groupby('Personal')['value'].mean())
+#personal 각 범주에 대한 가치의값을 평균으로 나타냄
+
+print(df.groupby('Personal')['value'].agg(['min','max','mean','median']))
+## aggregation을 사용해 City 각 범주에 대한 여러 통계량을 볼 수도 있습니다.(min, max, mean, median)
+
+#원핫인코딩의 경우 카테고리에 해당하는 변수들을 모두 더하기 때문 카테고리가 많은경우 사용하기 적합하지 않
+
+#pandas get_dummies를 사용해서 간단하게 원핫인코딩을 할수있다
+df_1 = pd.get_dummies(df,prefix=['Personal'],drop_first=True)
+#prefix -> columns 앞에 붙일 이름 정함, 범주형 column에 따라 리스트나 딕셔너리를 통해 컬럼별로 prefix 지정가능
+#drop_first ->True 일시 k개의 범주에서 k-1개로 만들때 사용 즉 불필요한 요소를 없앨때 사용
+print(df_1)
+
+#선형회귀 모델
+model_1 = LinearRegression() #모델 불러오기
+model_1.fit(df_1[['Personal_ISFJ','Personal_ISTJ','Personal_ISTP']],df_1['value']) #모델학습(fit)
+
+print(f'coef_ 계수 : {model_1.coef_}')
+print(f'intercept_ 계수 : {model_1.intercept_}')
+
+#category_encoders 라이브러리를 사용하면 범주형 데이터에만 원핫 인코딩을 할 수 있습니다
+
+features = df[['Personal','count']] #대괄호를 사용
+target = df[['value']]
+
+X_train,X_test,y_train,y_test = train_test_split(features,target,train_size=0.8,test_size=0.2)
+encoder = OneHotEncoder(use_cat_names= True)
+#use_cat_names -> True 일시 인코딩할때 이전의 컬럼이름을 사용할수있다
+X_train = encoder.fit_transform(X_train)
+X_test = encoder.transform(X_test)
+
+print(X_train.shape)
+print(X_test.shape)
+print(X_train)
